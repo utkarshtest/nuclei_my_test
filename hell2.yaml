@@ -1,31 +1,55 @@
-id: dell-dpi-panel
+id: citrix-xenmobile-version
 
 info:
-  name: Dell DPI Remote Power Management - Detect
-  author: megamansec
+  name: Citrix XenMobile Version - Detect
+  author: Puben
   severity: info
   description: |
-    The Dell Metered Rack Power Distribution Unit distributes power to a server rack and are installed at the rear of a rack enclosure.
+    Template for XenMobile-detection (even if login-page is deactivated) and the specific version and rolling patch from js/app/init.js endpoint
+  classification:
+    cpe: cpe:2.3:a:citrix:xenmobile_server:*:*:*:*:*:*:*:*
   metadata:
-    max-request: 1
-  tags: tech,dell,dpi,rpm,discovery
+    verified: true
+    max-request: 2
+    vendor: citrix
+    product: xenmobile_server
+    shodan-query: "title:\"XenMobile - Console\""
+  tags: tech,edb,citrix,version,detect,discovery
+flow: http(1) && http(2)
 
 http:
   - method: GET
     path:
-      - "{{BaseURL}}/index2.html"
+      - '{{BaseURL}}'
+
+    matchers:
+      - type: dsl
+        dsl:
+          - 'status_code == 302'
+          - 'contains(header, "Location: /zdm/login_xdm_uc.jsp")'
+        condition: and
+        internal: true
+
+  - method: GET
+    path:
+      - '{{BaseURL}}/js/app/init.js'
 
     matchers-condition: and
     matchers:
-      - type: word
+      - type: regex
+        name: version
         part: body
-        words:
-          - 'title="DELL DPI Remote Power Management'
-          - '<TITLE>DELL DPI Remote Power Management'
-        condition: or
-        case-insensitive: true
+        regex:
+          - 'v=([^"]+)'
 
       - type: status
         status:
           - 200
-# digest: 4a0a00473045022100dc8ae4356cf4e4a268e1827620f4bf517abcb40a867aee168ed26546a3483f7802205f7e4f010f3ffb7eedc3da68d83193dbb719ba763909e2f47674edf490597de6:922c64590222798bb761d5b6d8e72950
+
+    extractors:
+      - type: regex
+        part: body
+        group: 1
+        regex:
+          - 'v=([^"]+)'
+# digest: 4a0a00473045022100a2c52db64bc31927a2a459cfa1fc8ceedb66662e60715b46b46345cbce11d45d0220515b20d3105252522c9d59ff40556802cf925a42a7231feba14748adb03d47bb:922c64590222798bb761d5b6d8e72950
